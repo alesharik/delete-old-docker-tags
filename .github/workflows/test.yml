@@ -9,16 +9,57 @@ on: # rebuild any PRs and main branch changes
 jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
+        env:
+          REGISTRY_AUTH: htpasswd
+          REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
+          REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+          REGISTRY_STORAGE_DELETE_ENABLED: 'true'
+        volumes:
+          -  ${{ github.workspace }}/.github/registry_auth:/auth
     steps:
       - uses: actions/checkout@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          registry: localhost:5000
+          username: testuser
+          password: testpassword
+      - run: ./.github/scripts/create_test_tags.sh
       - run: |
           npm install
       - run: |
           npm run all
   test: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
+        env:
+          REGISTRY_AUTH: htpasswd
+          REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
+          REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+          REGISTRY_STORAGE_DELETE_ENABLED: 'true'
+        volumes:
+          -  ${{ github.workspace }}/.github/registry_auth:/auth
     steps:
       - uses: actions/checkout@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          registry: localhost:5000
+          username: testuser
+          password: testpassword
+      - run: ./.github/scripts/create_test_tags.sh
       - uses: ./
         with:
-          milliseconds: 1000
+          registry: http://localhost:5000
+          username: testuser
+          password: testpassword
+          repository: test

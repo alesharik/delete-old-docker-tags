@@ -1,18 +1,54 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import {DockerRegistryClient} from './client'
+
+async function deleteTag(
+  client: DockerRegistryClient,
+  repository: string,
+  tag: string
+): Promise<void> {
+  core.warning(`Deleting ${tag} tag`)
+  try {
+    const manifest = await client.getManifestDigest(repository, tag)
+    await client.deleteManifest(repository, manifest)
+    core.info(`Tag ${tag} deleted`)
+  } catch (e) {
+    core.error(e as Error)
+    throw e
+  }
+}
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    const username = core.getInput('username')
+    const password = core.getInput('password')
+    const registry = core.getInput('registry')
+    const repository = core.getInput('repository')
+    const toKeep = parseInt(core.getInput('keep-last'))
+    const versionExtractor = new RegExp(core.getInput('version-extractor'))
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    if (isNaN(toKeep)) {
+      core.setFailed('Please be sure to set input "keep-last" as a number')
+      return
+    }
 
-    core.setOutput('time', new Date().toTimeString())
+    const client = new DockerRegistryClient(registry, username, password)
+    await Promise.all(
+      // eslint-disable-next-line @typescript-eslint/require-array-sort-compare
+      (
+        await client.getTags(repository)
+      )
+        .map(tag => versionExtractor.exec(tag))
+        .filter((groups): groups is RegExpExecArray => groups !== null)
+        .map(groups => groups[1])
+        .sort()
+        .reverse()
+        .slice(toKeep)
+        .map(async tag => deleteTag(client, repository, tag))
+    )
+
+    core.setOutput('success', true)
   } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
+    core.setFailed((error as Error).message)
   }
 }
 

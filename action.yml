@@ -1,11 +1,26 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Delete Old Docker Tags'
+description: 'Deletes old docker tags based on condition'
 inputs:
-  milliseconds: # change this
+  registry:
+    description: 'registry to delete tags'
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+  username:
+    description: 'Username'
+    required: true
+  password:
+    description: 'Password'
+    required: true
+  repository:
+    description: 'Repository where delete tags'
+    required: true
+  keep-last:
+    description: 'How much tags to keep'
+    required: true
+    default: '10'
+  version-extractor:
+    description: 'Regex to extract version from tag. Extracts version from group 1'
+    required: true
+    default: 'v?(\d+(.\d+)*)'
 runs:
   using: 'node16'
   main: 'dist/index.js'
