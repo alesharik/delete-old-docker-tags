@@ -2,104 +2,62 @@
   <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/actions/typescript-action/workflows/build-test/badge.svg"></a>
 </p>
 
-# Create a JavaScript Action using TypeScript
+# Delete old github tags
 
-Use this template to bootstrap the creation of a TypeScript action.:rocket:
+GitHub action to delete old tags from docker registry.
 
-This template includes compilation support, tests, a validation workflow, publishing, and versioning guidance.  
+It will:
+1. Fetch all tags for specified image
+2. Extract semver versions from them. **If extraction fails, tag will be ignored (so `latest` and other tags like it will be safe)**
+3. Sort extracted versions in descending order
+4. Deletes all tags below `keep-last` position in sorted list. **This deletes manifests too, so if deleted tag points to `latest` manifest, these two tags will be deleted**
 
-If you are new, there's also a simpler introduction.  See the [Hello World JavaScript Action](https://github.com/actions/hello-world-javascript-action)
+### Inputs
 
-## Create an action from this template
+| Name                | Description                              | Required           | Default          |
+|---------------------|------------------------------------------|--------------------|------------------|
+| `registry`          | Registry URL (with http/https)           | :heavy_check_mark: |                  |
+| `username`          | Username to login into registry          | :heavy_check_mark: |                  |
+| `password`          | Password to login into registry          | :heavy_check_mark: |                  |
+| `repository`        | Repository/image name to fetch tags from | :heavy_check_mark: |                  |
+| `keep-last`         | How much versions to keep                |                    | `10`             |
+| `version-extractor` | Regex to extract SemVer version from tag |                    | `v?(\d+(.\d+)*)` |
 
-Click the `Use this Template` and provide the new repo details for your action
+### Example usage
 
-## Code in Main
-
-> First, you'll need to have a reasonably modern version of `node` handy. This won't work with versions older than 9, for instance.
-
-Install the dependencies  
-```bash
-$ npm install
-```
-
-Build the typescript and package it for distribution
-```bash
-$ npm run build && npm run package
-```
-
-Run the tests :heavy_check_mark:  
-```bash
-$ npm test
-
- PASS  ./index.test.js
-  ✓ throws invalid number (3ms)
-  ✓ wait 500 ms (504ms)
-  ✓ test runs (95ms)
-
-...
-```
-
-## Change action.yml
-
-The action.yml defines the inputs and output for your action.
-
-Update the action.yml with your name, description, inputs and outputs for your action.
-
-See the [documentation](https://help.github.com/en/articles/metadata-syntax-for-github-actions)
-
-## Change the Code
-
-Most toolkit and CI/CD operations involve async operations so the action is run in an async function.
-
-```javascript
-import * as core from '@actions/core';
-...
-
-async function run() {
-  try { 
-      ...
-  } 
-  catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run()
-```
-
-See the [toolkit documentation](https://github.com/actions/toolkit/blob/master/README.md#packages) for the various packages.
-
-## Publish to a distribution branch
-
-Actions are run from GitHub repos so we will checkin the packed dist folder. 
-
-Then run [ncc](https://github.com/zeit/ncc) and push the results:
-```bash
-$ npm run package
-$ git add dist
-$ git commit -a -m "prod dependencies"
-$ git push origin releases/v1
-```
-
-Note: We recommend using the `--license` option for ncc, which will create a license file for all of the production node modules used in your project.
-
-Your action is now published! :rocket: 
-
-See the [versioning documentation](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-
-## Validate
-
-You can now validate the action by referencing `./` in a workflow in your repo (see [test.yml](.github/workflows/test.yml))
+> Keep 10 last versions of image
 
 ```yaml
-uses: ./
+uses: alesharik/delete-old-docker-tags@v0.0.1
 with:
-  milliseconds: 1000
+  registry: https://registry.url
+  username: ${{ secrets.DOCKER_USERNAME }}
+  password: ${{ secrets.DOCKER_PASSWORD }}
+  repository: test
 ```
 
-See the [actions tab](https://github.com/actions/typescript-action/actions) for runs of this action! :rocket:
+> Keep 5 last versions of image
 
-## Usage:
+```yaml
+uses: alesharik/delete-old-docker-tags@v0.0.1
+with:
+  registry: https://registry.url
+  username: ${{ secrets.DOCKER_USERNAME }}
+  password: ${{ secrets.DOCKER_PASSWORD }}
+  repository: test
+  keep-last: 5
+```
 
-After testing you can [create a v1 tag](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md) to reference the stable and latest V1 action
+
+> Keep 5 last versions of dev images
+
+```yaml
+uses: alesharik/delete-old-docker-tags@v0.0.1
+with:
+  registry: https://registry.url
+  username: ${{ secrets.DOCKER_USERNAME }}
+  password: ${{ secrets.DOCKER_PASSWORD }}
+  repository: test
+  keep-last: 5
+  version-extractor: 'v?(\d+(.\d+)*)-dev'
+```
