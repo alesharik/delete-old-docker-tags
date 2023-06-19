@@ -1,12 +1,13 @@
 import * as core from '@actions/core'
 import {DockerRegistryClient} from './client'
+import Tag from './tag'
 
 async function deleteTag(
   client: DockerRegistryClient,
   repository: string,
   tag: string
 ): Promise<void> {
-  core.warning(`Deleting ${tag} tag`)
+  core.info(`Deleting ${tag} tag`)
   try {
     const manifest = await client.getManifestDigest(repository, tag)
     await client.deleteManifest(repository, manifest)
@@ -33,17 +34,14 @@ async function run(): Promise<void> {
 
     const client = new DockerRegistryClient(registry, username, password)
     await Promise.all(
-      // eslint-disable-next-line @typescript-eslint/require-array-sort-compare
       (
         await client.getTags(repository)
       )
-        .map(tag => versionExtractor.exec(tag))
-        .filter((groups): groups is RegExpExecArray => groups !== null)
-        .map(groups => groups[1])
-        .sort()
-        .reverse()
+        .map(value => Tag.parse(value, versionExtractor))
+        .filter((value): value is Tag => value !== undefined)
+        .sort((a, b) => a.rcompare(b))
         .slice(toKeep)
-        .map(async tag => deleteTag(client, repository, tag))
+        .map(async tag => deleteTag(client, repository, tag.original))
     )
 
     core.setOutput('success', true)
