@@ -156,7 +156,7 @@ function run() {
             const client = new client_1.DockerRegistryClient(registry, username, password);
             yield Promise.all((yield client.getTags(repository))
                 .map(value => tag_1.default.parse(value, versionExtractor))
-                .filter((value) => value !== undefined)
+                .filter((value) => value !== null)
                 .sort((a, b) => a.rcompare(b))
                 .slice(toKeep)
                 .map((tag) => __awaiter(this, void 0, void 0, function* () { return deleteTag(client, repository, tag.original); })));
