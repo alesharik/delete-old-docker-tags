@@ -38,7 +38,7 @@ async function run(): Promise<void> {
         await client.getTags(repository)
       )
         .map(value => Tag.parse(value, versionExtractor))
-        .filter((value): value is Tag => value !== undefined)
+        .filter((value): value is Tag => value !== null)
         .sort((a, b) => a.rcompare(b))
         .slice(toKeep)
         .map(async tag => deleteTag(client, repository, tag.original))
