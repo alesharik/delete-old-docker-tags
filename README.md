@@ -28,7 +28,7 @@ It will:
 > Keep 10 last versions of image
 
 ```yaml
-uses: alesharik/delete-old-docker-tags@v0.0.1
+uses: alesharik/delete-old-docker-tags@v0.0.2
 with:
   registry: https://registry.url
   username: ${{ secrets.DOCKER_USERNAME }}
@@ -39,7 +39,7 @@ with:
 > Keep 5 last versions of image
 
 ```yaml
-uses: alesharik/delete-old-docker-tags@v0.0.1
+uses: alesharik/delete-old-docker-tags@v0.0.2
 with:
   registry: https://registry.url
   username: ${{ secrets.DOCKER_USERNAME }}
@@ -52,7 +52,7 @@ with:
 > Keep 5 last versions of dev images
 
 ```yaml
-uses: alesharik/delete-old-docker-tags@v0.0.1
+uses: alesharik/delete-old-docker-tags@v0.0.2
 with:
   registry: https://registry.url
   username: ${{ secrets.DOCKER_USERNAME }}
